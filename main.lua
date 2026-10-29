@@ -1,5 +1,7 @@
 --- @since 26.9.1
 
+local P = require("zeppelin")
+
 local M = {}
 
 local function notify(content, level)
@@ -176,9 +178,6 @@ local function real_env()
 	}
 end
 
--- shortcut: confirm body has no scroll view, shows CONFIRM_MAX_LINES lines and "… N more"; same limit as zarchive.yazi
-local CONFIRM_MAX_LINES = 11
-
 local function describe(ents, env)
 	local shown = {}
 	for i, ent in ipairs(ents) do
@@ -188,25 +187,12 @@ local function describe(ents, env)
 	return shown
 end
 
-local function confirm_list(batch, title)
-	local lines = {}
-	local total = #batch
-	local shown = total > CONFIRM_MAX_LINES and CONFIRM_MAX_LINES - 1 or total
-	for i = 1, shown do
-		local ent = batch[i]
-		local path = ent.original
-		local mode = ent.is_link and "120777" or ent.is_dir and "40700" or "100644"
-		local icon = th.icon:match(File { url = Url(path), cha = Cha { mode = tonumber(mode, 8) } })
-		lines[#lines + 1] = ui.Line { ui.Span("  "), icon and ui.Span(icon.text .. " "):style(icon.style) or ui.Span("  "), ui.Span(path) }:align(ui.Align.LEFT)
+local function as_items(ents)
+	local items = {}
+	for i, e in ipairs(ents) do
+		items[i] = { path = tostring(e.original), dir = e.is_dir, link = e.is_link }
 	end
-	if total > shown then
-		lines[#lines + 1] = ui.Line(string.format("  \u{2026} %d more", total - shown)):align(ui.Align.LEFT)
-	end
-	return ya.confirm {
-		pos = { "center", w = 80, h = math.min(#lines + 4, 30) },
-		title = title,
-		body = ui.Text(lines):align(ui.Align.LEFT),
-	}
+	return items
 end
 
 function M:entry()
@@ -227,7 +213,7 @@ function M:entry()
 		return notify("nothing to restore", "warn")
 	end
 
-	if not confirm_list(batch, string.format("Restore %d deleted item(s)?", #batch)) then
+	if not P.confirm_list(as_items(batch), string.format("Restore %d deleted item(s)?", #batch)) then
 		return
 	end
 
@@ -238,7 +224,7 @@ function M:entry()
 	end
 	if #blocked > 0 then
 		local title = string.format("%d item(s) refuse to replace a directory. Restore the rest?", #blocked)
-		if not confirm_list(describe(blocked, env), title) then
+		if not P.confirm_list(as_items(describe(blocked, env)), title) then
 			return notify("cancelled, nothing restored", "warn")
 		end
 	end
@@ -259,7 +245,7 @@ function M:entry()
 		end
 		local title = files > 0 and string.format("Overwrite %d existing item(s)? Files will be PERMANENTLY deleted.", #shown)
 			or string.format("Replace %d symlink(s)? Only the links change; their targets are untouched.", #shown)
-		local yes = confirm_list(shown, title)
+		local yes = P.confirm_list(as_items(shown), title)
 		if yes then
 			for _, ent in ipairs(conflicts) do
 				approved[target_of(ent)] = true

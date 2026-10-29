@@ -5,6 +5,7 @@ debug.sethook(function(_, line)
   end
 end, "l")
 
+package.preload.zeppelin = function() return dofile("../zeppelin.yazi/main.lua") end
 local P = dofile("main.lua")
 
 -- yazi API stub. Contracts from yazi v26.9.1 source (yazi-fs/src/trash, entry.rs):
