@@ -14,8 +14,8 @@ non-directory blocking a directory is reported as blocked.
 ## Installation
 
 ```sh
-ya pkg add ibtrujillo/zundo.yazi
-ya pkg add ibtrujillo/zeppelin.yazi
+ya pkg add ibtrujillo/zundo
+ya pkg add ibtrujillo/zeppelin
 ```
 
 ## Usage
